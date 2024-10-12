@@ -25,12 +25,6 @@
             text-align: center;
             max-width: 400px;
             width: 100%;
-            animation: fadeIn 1s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         h1 {
@@ -52,14 +46,6 @@
             margin-bottom: 20px;
             border-radius: 5px;
             border: 1px solid #ddd;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: border-color 0.3s;
-        }
-
-        input[type="number"]:focus {
-            outline: none;
-            border-color: #1e90ff;
-            box-shadow: 0 0 8px rgba(30, 144, 255, 0.2);
         }
 
         button {
@@ -70,26 +56,17 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
         }
 
         button:hover {
             background-color: #187bcd;
-            transform: translateY(-2px);
         }
 
-        #robuxResult {
+        #robuxResult, #totalResult, #totalGemsResult, #totalRobuxResult {
             margin-top: 20px;
             font-size: 18px;
             font-weight: bold;
             color: #28a745;
-            opacity: 0;
-            animation: showResult 0.5s ease-in-out forwards;
-        }
-
-        @keyframes showResult {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
         }
 
         #clock {
@@ -97,103 +74,72 @@
             font-size: 22px;
             color: #ff4b4b;
         }
-
-        /* Custom alert styles */
-        .custom-alert {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #ff4b4b;
-            color: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            font-size: 18px;
-            display: none;
-        }
-
-        .show-alert {
-            display: block;
-            animation: slideDown 0.5s ease-in-out;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Převodník gemů na robuxy</h1>
 
-        <label for="gems">Zadej počet gemů:</label><br>
-        <input type="number" id="gems" placeholder="Zadej gemy" /><br>
+        <label for="gems">Zadej počet gemů:</label>
+        <input type="number" id="gems" placeholder="Zadej gemy" />
+
+        <label for="totalGems">Zadej celkový počet gemů v inventáři:</label>
+        <input type="number" id="totalGems" placeholder="Celkové gemy" />
 
         <button onclick="convertGems()">Převést na Robuxy</button>
 
         <div id="robuxResult"></div>
+        <div id="totalResult"></div>
+        <div id="totalGemsResult"></div>
+        <div id="totalRobuxResult"></div>
 
         <div id="clock"></div>
     </div>
 
-    <!-- Custom alert box -->
-    <div id="customAlert" class="custom-alert">Uplynulo 30 minut!</div>
-
     <script>
         function convertGems() {
-            const gems = document.getElementById("gems").value;
-            const robux = gems / 1000;
-            const resultElement = document.getElementById("robuxResult");
+            const gems = parseInt(document.getElementById("gems").value);
+            const totalGems = parseInt(document.getElementById("totalGems").value);
+            const robuxPerGem = 1000; // 1 Robux = 1000 Gemů
 
-            if (gems === '' || gems <= 0) {
-                resultElement.innerText = "Zadejte platný počet gemů!";
-                resultElement.style.color = "#ff4b4b";
-                resultElement.style.opacity = "1";
-            } else {
-                resultElement.innerText = gems + " gemů = " + robux + " robuxů";
-                resultElement.style.color = "#28a745";
-                resultElement.style.opacity = "1";
+            // Výstupy
+            let robuxResultElement = document.getElementById("robuxResult");
+            let totalResultElement = document.getElementById("totalResult");
+            let totalGemsResultElement = document.getElementById("totalGemsResult");
+            let totalRobuxResultElement = document.getElementById("totalRobuxResult");
+
+            // Kontrola vstupů
+            if (isNaN(gems) || gems <= 0) {
+                robuxResultElement.innerText = "Zadejte platný počet gemů!";
+                robuxResultElement.style.color = "#ff4b4b";
+                return;
             }
+            if (isNaN(totalGems) || totalGems < 0) {
+                totalGemsResultElement.innerText = "Zadejte platný celkový počet gemů!";
+                totalGemsResultElement.style.color = "#ff4b4b";
+                return;
+            }
+
+            // Výpočty
+            const robux = gems / robuxPerGem;
+            const totalRobux = totalGems / robuxPerGem;
+
+            // Zobrazení výsledků
+            robuxResultElement.innerText = `${gems} gemů = ${Math.floor(robux)} robuxů.`; // Zobrazit celá čísla
+            totalResultElement.innerText = `Celkově máte ${totalGems} gemů = ${Math.floor(totalRobux)} robuxů.`;
+            totalGemsResultElement.innerText = `Celkem máte gemy: ${totalGems}`;
+            totalRobuxResultElement.innerText = `Celkem máte robuxy: ${Math.floor(totalRobux)}`; // Zobrazit celá čísla
         }
 
-        // Funkce pro zobrazení a skrytí alertu
-        function showAlert() {
-            const alertBox = document.getElementById("customAlert");
-            alertBox.classList.add("show-alert");
-            setTimeout(() => {
-                alertBox.classList.remove("show-alert");
-            }, 3000);
-        }
-
-        // Funkce pro zobrazení času a spuštění časovače
         function startClock() {
             const clockElement = document.getElementById("clock");
-            let startTime = new Date();
-            startTime.setHours(14, 0, 0); // Začátek ve 14:00
-
-            function updateClock() {
+            setInterval(() => {
                 const now = new Date();
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                const seconds = String(now.getSeconds()).padStart(2, '0');
-
-                clockElement.innerText = `Čas: ${hours}:${minutes}:${seconds}`;
-
-                const timeDiff = now - startTime;
-                const halfHourInMs = 30 * 60 * 1000; // 30 minut v milisekundách
-
-                if (timeDiff >= halfHourInMs) {
-                    showAlert();
-                    startTime = now; // Resetovat startovací čas
-                }
-            }
-
-            setInterval(updateClock, 1000); // Aktualizace každou sekundu
+                clockElement.innerText = `Čas: ${now.toLocaleTimeString()}`;
+            }, 1000);
         }
 
-        window.onload = startClock;
+        startClock(); // Spustit časovač
     </script>
 </body>
 </html>
